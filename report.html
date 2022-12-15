@@ -1,0 +1,85 @@
+<html>
+  <body>
+    <span>Input csv</span>
+    <input type="file" onchange="readText(event)" />
+
+    <div>
+      <h2>VM.native_memory over time</h2>
+      <canvas id="myChart"></canvas>
+    </div>
+
+    <h2>File content</h2>
+    <pre id="output"></pre>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"
+      integrity="sha512-SGWgwwRA8xZgEoKiex3UubkSkV1zSE1BS6O4pXcaxcNtUlQsOmOmhVnDwIvqGRfEmuz83tIGL13cXMZn6upPyg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+
+      function getRandomColor() {
+        return Math.floor(Math.random() * 255);
+      }
+      
+      function showLineChart(json) {
+        var datapoints = json.meta.fields;
+        var timeline = json.data.map((entry) => entry.Time);
+
+        var datasets = [];
+        for (datapoint of datapoints) {
+          if (datapoint === "Time") {
+            continue;
+          }
+
+          var datapoint_data = json.data
+            .map((entry) => entry[datapoint])
+            .map((value) => value.replace("KB", ""))
+            .map((value) => Number.parseInt(value));
+          var label = datapoint;
+          var borderColor =
+            "rgb(" +
+            getRandomColor() +
+            ", " +
+            getRandomColor() +
+            ", " +
+            getRandomColor() +
+            ")";
+
+          console.log("Pushing data for ", datapoint, " as ", datapoint_data);
+          datasets.push({
+            label,
+            data: datapoint_data,
+            fill: false,
+            borderColor,
+            tension: 0.1,
+          });
+        }
+
+        var data = {
+          labels: timeline,
+          datasets,
+        };
+
+        var config = {
+          type: "line",
+          data: data,
+        };
+
+        const myChart = new Chart(document.getElementById("myChart"), config);
+      }
+
+      async function readText(event) {
+        const file = event.target.files.item(0);
+        const text = await file.text();
+        document.getElementById("output").innerText = text;
+        var json = Papa.parse(text, { header: true });
+        console.log(json);
+        showLineChart(json);
+      }
+    </script>
+  </body>
+</html>
